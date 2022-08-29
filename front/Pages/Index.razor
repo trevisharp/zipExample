@@ -1,0 +1,31 @@
+﻿@page "/"
+@inject HttpClient client
+@inject ZipService zip
+
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage storage
+
+<PageTitle>Index</PageTitle>
+
+<input type="text" @bind="InitialData" />
+<br/>
+<button @onclick="@Send">Enviar</button>
+<h1>@Data</h1>
+
+@code {
+    public string Data { get; set; }
+    public string InitialData { get; set; }
+
+    public async Task Send()
+    {
+        var compressed = await zip.ZipData(InitialData);
+
+        CompressedData compdata = new CompressedData();
+        compdata.Data = compressed;
+        var response = await client.PostAsJsonAsync<CompressedData>("/main", compdata);
+        this.Data = await response.Content.ReadAsStringAsync();
+
+        storage.SetAsync("info", this.Data);
+        StateHasChanged();
+    }
+}
